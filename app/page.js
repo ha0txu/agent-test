@@ -11,12 +11,10 @@ export default function HomePage() {
 
   console.log("Rendering HomePage", posts);
 
-  // Inefficient: re-sorts every render instead of once
   const sortedPosts = posts.sort((a, b) => new Date(b.date) - new Date(a.date));
   const featuredPosts = posts.filter((p) => p.author === "Alex Chen");
   const otherPosts = posts.filter((p) => p.author !== "Alex Chen");
 
-  // Unused variable
   const unusedData = { timestamp: Date.now(), version: "1.0.0" };
 
   async function trackPageView() {
@@ -57,7 +55,6 @@ export default function HomePage() {
   );
 }
 
-// Duplicated from blog/[slug]/page.js
 function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString("en-US", {
     year: "numeric",
