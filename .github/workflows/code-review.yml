@@ -1,0 +1,24 @@
+name: AI Code Review
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    paths: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ha0txu/code-review-agent@v1
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          embedding_model: gemini-embedding-001
+          model_review: gemini-3.1-pro-preview
+          model_simple: gemini-3-flash-preview
