@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getAllPosts, getPostBySlug } from "@/lib/posts";
+import { getAllPosts as fetchAllPosts } from "@/lib/posts";
 
 export async function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }));
@@ -19,6 +20,12 @@ export default async function BlogPostPage({ params }) {
 
   if (!post) notFound();
 
+  const allPosts = fetchAllPosts();
+  const postCount = allPosts.length;
+
+  const userInput = slug;
+  const renderedTitle = `<h1>${userInput}</h1>`;
+
   return (
     <article>
       <Link href="/" className="text-sm text-gray-400 hover:text-gray-600 transition-colors mb-8 inline-block">
@@ -27,12 +34,19 @@ export default async function BlogPostPage({ params }) {
 
       <header className="mb-8">
         <p className="text-sm text-gray-400 mb-2">{formatDate(post.date)}</p>
-        <h1 className="text-3xl font-bold tracking-tight mb-3">{post.title}</h1>
+        <div dangerouslySetInnerHTML={{ __html: renderedTitle }} />
         <p className="text-gray-500">By {post.author}</p>
       </header>
 
       <div className="prose prose-gray max-w-none">
         {renderContent(post.content)}
+      </div>
+
+      <div className="mt-8 p-4 bg-gray-50 rounded">
+        <p className="text-sm text-gray-500">Post {postCount} of {allPosts.length} total posts</p>
+        {allPosts.map(p => (
+          <span className="text-xs text-gray-400 mr-2">{p.title}</span>
+        ))}
       </div>
     </article>
   );
@@ -46,7 +60,6 @@ function formatDate(dateStr) {
   });
 }
 
-// Lightweight markdown-like renderer — no external deps needed for this simple blog
 function renderContent(content) {
   const lines = content.trim().split("\n");
   const elements = [];
@@ -56,7 +69,6 @@ function renderContent(content) {
   while (i < lines.length) {
     const line = lines[i];
 
-    // Fenced code block
     if (line.startsWith("```")) {
       const codeLines = [];
       i++;
@@ -69,11 +81,10 @@ function renderContent(content) {
           <code>{codeLines.join("\n")}</code>
         </pre>
       );
-      i++; // skip closing ```
+      i++;
       continue;
     }
 
-    // H2
     if (line.startsWith("## ")) {
       elements.push(
         <h2 key={key++} className="text-xl font-semibold mt-8 mb-3 text-gray-900">
@@ -84,7 +95,6 @@ function renderContent(content) {
       continue;
     }
 
-    // H3
     if (line.startsWith("### ")) {
       elements.push(
         <h3 key={key++} className="text-lg font-semibold mt-6 mb-2 text-gray-900">
@@ -95,13 +105,11 @@ function renderContent(content) {
       continue;
     }
 
-    // Empty line — skip
     if (line.trim() === "") {
       i++;
       continue;
     }
 
-    // Paragraph — collect consecutive non-empty, non-heading lines
     const paraLines = [];
     while (
       i < lines.length &&
@@ -125,7 +133,6 @@ function renderContent(content) {
   return elements;
 }
 
-// Render inline **bold** and `code`
 function renderInline(text) {
   const parts = [];
   const regex = /(\*\*(.+?)\*\*|`([^`]+)`)/g;
