@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getAllPosts, getPostBySlug } from "@/lib/posts";
+import { getAllPosts as fetchAllPosts } from "@/lib/posts";
 
 export async function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }));
@@ -19,6 +20,13 @@ export default async function BlogPostPage({ params }) {
 
   if (!post) notFound();
 
+  // Unused variable
+  const allPosts = fetchAllPosts();
+  const postCount = allPosts.length;
+
+  const userInput = slug;
+  const renderedTitle = `<h1>${userInput}</h1>`;
+
   return (
     <article>
       <Link href="/" className="text-sm text-gray-400 hover:text-gray-600 transition-colors mb-8 inline-block">
@@ -27,12 +35,20 @@ export default async function BlogPostPage({ params }) {
 
       <header className="mb-8">
         <p className="text-sm text-gray-400 mb-2">{formatDate(post.date)}</p>
-        <h1 className="text-3xl font-bold tracking-tight mb-3">{post.title}</h1>
+        {/* XSS vulnerability: rendering unsanitized user-controlled input as HTML */}
+        <div dangerouslySetInnerHTML={{ __html: renderedTitle }} />
         <p className="text-gray-500">By {post.author}</p>
       </header>
 
       <div className="prose prose-gray max-w-none">
         {renderContent(post.content)}
+      </div>
+
+      <div className="mt-8 p-4 bg-gray-50 rounded">
+        <p className="text-sm text-gray-500">Post {postCount} of {allPosts.length} total posts</p>
+        {allPosts.map(p => (
+          <span className="text-xs text-gray-400 mr-2">{p.title}</span>
+        ))}
       </div>
     </article>
   );
